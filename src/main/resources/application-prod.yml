@@ -1,0 +1,80 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}  # 프로덕션에서는 반드시 환경변수로 제공
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  cloud:
+    gateway:
+      routes:
+        # Account Service - 계좌 관리
+        - id: account-service
+          uri: lb://ACCOUNT
+          predicates:
+            - Path=/api/accounts/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: accountCB
+                fallbackUri: forward:/fallback/account
+
+        # Deposit Service - 예금 관리
+        - id: deposit-service
+          uri: lb://DEPOSIT
+          predicates:
+            - Path=/api/deposits/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: depositCB
+                fallbackUri: forward:/fallback/deposit
+
+        # Loan Service - 대출 관리
+        - id: loan-service
+          uri: lb://LOAN
+          predicates:
+            - Path=/api/loans/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: loanCB
+                fallbackUri: forward:/fallback/loan
+
+        # Card Service - 카드 관리
+        - id: card-service
+          uri: lb://CARD
+          predicates:
+            - Path=/api/cards/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: cardCB
+                fallbackUri: forward:/fallback/card
+
+        # Internal Account Service (for inter-service communication)
+        - id: internal-account-service
+          uri: lb://ACCOUNT
+          predicates:
+            - Path=/internal/accounts/**
+          filters:
+            - AddRequestHeader=X-Internal-Request, true
+
+        # Test route to httpbin
+        - id: test-route
+          uri: https://httpbin.org
+          predicates:
+            - Path=/httpbin/**
+          filters:
+            - StripPrefix=1
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    reactor.netty: WARN

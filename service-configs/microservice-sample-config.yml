@@ -1,0 +1,32 @@
+# 마이크로서비스에서 Eureka에 등록하기 위한 설정 예시
+# 각 마이크로서비스의 application.yml에 아래 설정을 추가하세요
+
+spring:
+  application:
+    name: PAYMENT-SERVICE  # 서비스 이름 (SEARCH-SERVICE, BLUE-BANK-SERVICE 등으로 변경)
+
+server:
+  port: 8081  # 각 서비스마다 다른 포트 사용
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    metadata-map:
+      zone: primary
+      version: 1.0.0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

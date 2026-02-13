@@ -1,0 +1,8 @@
+# SSL certificates should be placed in this directory
+#
+# For development, generate self-signed certificates:
+# openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+#   -keyout server.key -out server.crt \
+#   -subj "/C=KR/ST=Seoul/L=Seoul/O=BlueBank/CN=localhost"
+#
+# For production, use proper certificates from a CA (Let's Encrypt, etc.)
