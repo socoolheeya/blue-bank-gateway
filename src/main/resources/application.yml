@@ -1,32 +1,29 @@
-server:
-  port: 8080
+# ============================================
+# Blue Bank API Gateway - Common Configuration
+# ============================================
 
 spring:
   application:
     name: api-gateway
 
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}  # 기본값: local
+
+  # Gateway 기본 설정
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
       httpclient:
-        connect-timeout: 10000
-        response-timeout: 15000
         pool:
           max-connections: 500
           acquire-timeout: 45000
 
+      # 모든 라우트에 적용되는 기본 필터
       default-filters:
-        - AddRequestHeader=X-Gateway, spring-gateway
-        - AddResponseHeader=X-Gateway-Version, v1
-#        - name: RequestRateLimiter
-#          args:
-#            redis-rate-limiter.replenishRate: 1
-#            redis-rate-limiter.burstCapacity: 1
-#            key-resolver: "#{@ipKeyResolver}"
+        - AddRequestHeader=X-Gateway, blue-bank-gateway
+        - AddResponseHeader=X-Gateway-Version, v1.0.0
+        - AddResponseHeader=X-Response-Time, "#{T(java.lang.System).currentTimeMillis()}"
 
+      # 서비스 라우트 정의
       routes:
         # Account Service - 계좌 관리
         - id: account-service
@@ -79,19 +76,15 @@ spring:
             - Path=/internal/accounts/**
           filters:
             - AddRequestHeader=X-Internal-Request, true
+            - RemoveRequestHeader=Cookie
+            - RemoveRequestHeader=Set-Cookie
 
-        # Test route to httpbin
-        - id: test-route
-          uri: https://httpbin.org
-          predicates:
-            - Path=/httpbin/**
-          filters:
-            - StripPrefix=1
-
+# JWT 기본 설정
 jwt:
   secret: ${JWT_SECRET:your-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm}
+  expiration: 86400000  # 24시간
 
-# Resilience4j Circuit Breaker configuration
+# Resilience4j Circuit Breaker 기본 설정
 resilience4j:
   circuitbreaker:
     configs:
@@ -113,6 +106,7 @@ resilience4j:
         baseConfig: default
       cardCB:
         baseConfig: default
+
   timelimiter:
     configs:
       default:
@@ -126,30 +120,3 @@ resilience4j:
         baseConfig: default
       cardCB:
         baseConfig: default
-
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
-    registry-fetch-interval-seconds: 5
-  instance:
-    prefer-ip-address: true
-    lease-renewal-interval-in-seconds: 5
-    lease-expiration-duration-in-seconds: 10
-    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"  # 모든 endpoints 노출 (개발 환경용)
-  endpoint:
-    health:
-      show-details: always
-    gateway:
-      enabled: true
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-

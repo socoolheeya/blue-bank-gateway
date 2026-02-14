@@ -1,0 +1,182 @@
+# ============================================
+# Blue Bank API Gateway - Staging Environment Configuration
+# ============================================
+
+spring:
+  # Redis 설정 (staging 클러스터 - HA 구성)
+  data:
+    redis:
+      cluster:
+        nodes:
+          - staging-redis-1.bluebank.internal:6379
+          - staging-redis-2.bluebank.internal:6379
+          - staging-redis-3.bluebank.internal:6379
+      password: ${REDIS_PASSWORD:staging-redis-secure-password}
+      timeout: 10000ms
+      lettuce:
+        pool:
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+        cluster:
+          refresh:
+            period: 60s
+
+# Eureka Client 설정 (프로덕션 - Multi-AZ HA 구성)
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://staging-eureka-1.bluebank.internal:8761/eureka,http://staging-eureka-2.bluebank.internal:8761/eureka}
+    fetch-registry: true
+    register-with-eureka: true
+    registry-fetch-interval-seconds: 10
+  instance:
+    hostname: ${HOSTNAME:gateway-staging}
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+    metadata-map:
+      zone: staging
+      environment: staging
+      datacenter: ${DATACENTER:us-east-1}
+
+# 서버 설정 (프로덕션 최적화)
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  tomcat:
+    connection-timeout: 20s
+    keep-alive-timeout: 15s
+    threads:
+      max: 500
+      min-spare: 50
+
+# Actuator 설정 (프로덕션은 최소 노출, 인증 필수)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /management
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: when-authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: staging
+      datacenter: ${DATACENTER:us-east-1}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+        pushgateway:
+          address: http://staging-pushgateway.bluebank.internal:9091
+          enabled: true
+
+# 로깅 설정 (프로덕션 - 최소 로그, 외부 로그 수집)
+logging:
+  level:
+    root: WARN
+    org.springframework.cloud.gateway: INFO
+    org.springframework.cloud.gateway.route: INFO
+    org.springframework.cloud.loadbalancer: WARN
+    com.netflix.discovery: WARN
+    com.socoolheeya.bluebank: INFO
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/gateway/gateway-staging.log
+    max-size: 500MB
+    max-history: 30
+  logback:
+    rollingpolicy:
+      file-name-pattern: /var/log/gateway/archived/gateway-staging-%d{yyyy-MM-dd}.%i.gz
+
+# CORS 설정 (프로덕션 - 엄격한 설정)
+spring.cloud.gateway:
+  globalcors:
+    cors-configurations:
+      '[/**]':
+        allowedOrigins:
+          - "https://staging.bluebank.com"
+          - "https://staging-admin.bluebank.com"
+          - "https://staging-api.bluebank.com"
+        allowedMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+        allowedHeaders:
+          - Authorization
+          - Content-Type
+          - X-Requested-With
+        exposedHeaders:
+          - X-Rate-Limit-Remaining
+          - X-Rate-Limit-Reset
+        allowCredentials: true
+        maxAge: 1800
+
+# Rate Limiting 설정 (프로덕션 - 엄격한 제한)
+rate-limit:
+  enabled: true
+  default-replenish-rate: 20
+  default-burst-capacity: 40
+  ip-based:
+    enabled: true
+    replenish-rate: 10
+    burst-capacity: 20
+
+# JWT 설정 (프로덕션 - 보안 강화)
+jwt:
+  secret: ${JWT_SECRET}  # 필수: 환경 변수로 제공 (최소 512비트)
+  expiration: 43200000  # 120분
+  refresh-expiration: 604800000  # 7시간
+
+# Circuit Breaker 설정 (프로덕션 - 엄격한 장애 격리)
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 200
+        minimumNumberOfCalls: 20
+        permittedNumberOfCallsInHalfOpenState: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 30s
+        failureRateThreshold: 40
+        slowCallRateThreshold: 40
+        slowCallDurationThreshold: 5s
+        recordExceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+        ignoreExceptions:
+          - com.socoolheeya.bluebank.exception.BusinessException
+    instances:
+      accountCB:
+        baseConfig: default
+        minimumNumberOfCalls: 15
+      depositCB:
+        baseConfig: default
+        minimumNumberOfCalls: 15
+      loanCB:
+        baseConfig: default
+        minimumNumberOfCalls: 15
+      cardCB:
+        baseConfig: default
+        minimumNumberOfCalls: 15
+
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 10s
+        cancelRunningFuture: true
+
+# 보안 설정 (프로덕션 - 최고 수준)
+security:
+  require-ssl: true
+  headers:
+    content-security-policy: "default-src 'self'"
+    strict-transport-security: "max-age=31536000; includeSubDomains"
+    x-frame-options: "DENY"
+    x-content-type-options: "nosniff"

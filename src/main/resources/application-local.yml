@@ -1,9 +1,14 @@
+# ============================================
+# Blue Bank API Gateway - Local Development Configuration
+# ============================================
+
 spring:
+  # Redis 설정 (로컬 개발용)
   data:
     redis:
       host: localhost
       port: 6379
-      password:  # 비밀번호 없음 (로컬 개발용)
+      password: ${REDIS_PASSWORD:}
       timeout: 2000ms
       lettuce:
         pool:
@@ -11,7 +16,76 @@ spring:
           max-idle: 8
           min-idle: 0
 
+# Eureka Client 설정 (로컬 개발)
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    fetch-registry: true
+    register-with-eureka: true
+    registry-fetch-interval-seconds: 30
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+    metadata-map:
+      zone: local
+
+# 서버 설정
+server:
+  port: 8080
+
+# Actuator 설정 (로컬은 모든 엔드포인트 노출)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: false
+
+# 로깅 설정 (로컬은 상세 로그)
 logging:
   level:
+    root: INFO
     org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.gateway.route: DEBUG
+    org.springframework.cloud.loadbalancer: DEBUG
+    com.netflix.discovery: DEBUG
+    com.socoolheeya.bluebank: DEBUG
     reactor.netty: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+
+# 개발 편의 설정
+spring.cloud.gateway:
+  globalcors:
+    cors-configurations:
+      '[/**]':
+        allowedOrigins:
+          - "http://localhost:3000"
+          - "http://localhost:3001"
+          - "http://127.0.0.1:3000"
+        allowedMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        allowedHeaders: "*"
+        allowCredentials: true
+        maxAge: 3600
+
+# Rate Limiting 설정 (로컬은 느슨하게)
+rate-limit:
+  enabled: true
+  default-replenish-rate: 100
+  default-burst-capacity: 200

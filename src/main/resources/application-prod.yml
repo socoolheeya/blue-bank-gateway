@@ -1,80 +1,289 @@
+# ============================================
+# Blue Bank API Gateway - Production Environment Configuration
+# ============================================
+
 spring:
+  # Redis 설정 (프로덕션 클러스터 - HA 구성)
   data:
     redis:
-      host: ${REDIS_HOST:redis}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD}  # 프로덕션에서는 반드시 환경변수로 제공
-      timeout: 2000ms
+      cluster:
+        nodes:
+          - ${REDIS_NODE_1:prod-redis-1.bluebank.internal:6379}
+          - ${REDIS_NODE_2:prod-redis-2.bluebank.internal:6379}
+          - ${REDIS_NODE_3:prod-redis-3.bluebank.internal:6379}
+          - ${REDIS_NODE_4:prod-redis-4.bluebank.internal:6379}
+          - ${REDIS_NODE_5:prod-redis-5.bluebank.internal:6379}
+          - ${REDIS_NODE_6:prod-redis-6.bluebank.internal:6379}
+      password: ${REDIS_PASSWORD}  # 필수: 환경 변수로 제공
+      timeout: 15000ms
       lettuce:
         pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
+          max-active: 64
+          max-idle: 32
+          min-idle: 8
+        cluster:
+          refresh:
+            adaptive: true
+            period: 30s
+      sentinel:
+        master: blue-bank-master
+        nodes:
+          - ${SENTINEL_NODE_1:prod-sentinel-1.bluebank.internal:26379}
+          - ${SENTINEL_NODE_2:prod-sentinel-2.bluebank.internal:26379}
+          - ${SENTINEL_NODE_3:prod-sentinel-3.bluebank.internal:26379}
 
-  cloud:
-    gateway:
-      routes:
-        # Account Service - 계좌 관리
-        - id: account-service
-          uri: lb://ACCOUNT
-          predicates:
-            - Path=/api/accounts/**
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: accountCB
-                fallbackUri: forward:/fallback/account
+# Eureka Client 설정 (프로덕션 - Multi-AZ HA 구성)
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://prod-eureka-1.bluebank.internal:8761/eureka,http://prod-eureka-2.bluebank.internal:8761/eureka,http://prod-eureka-3.bluebank.internal:8761/eureka}
+    fetch-registry: true
+    register-with-eureka: true
+    registry-fetch-interval-seconds: 5
+    eureka-server-read-timeout-seconds: 15
+    eureka-server-connect-timeout-seconds: 5
+  instance:
+    hostname: ${HOSTNAME}
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
+    metadata-map:
+      zone: ${ZONE:prod}
+      environment: production
+      datacenter: ${DATACENTER}
+      version: ${APP_VERSION}
+      deployment-id: ${DEPLOYMENT_ID}
 
-        # Deposit Service - 예금 관리
-        - id: deposit-service
-          uri: lb://DEPOSIT
-          predicates:
-            - Path=/api/deposits/**
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: depositCB
-                fallbackUri: forward:/fallback/deposit
+# 서버 설정 (프로덕션 최적화)
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  tomcat:
+    connection-timeout: 30s
+    keep-alive-timeout: 20s
+    threads:
+      max: 1000
+      min-spare: 100
+    accept-count: 1000
+    max-connections: 10000
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 2048
 
-        # Loan Service - 대출 관리
-        - id: loan-service
-          uri: lb://LOAN
-          predicates:
-            - Path=/api/loans/**
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: loanCB
-                fallbackUri: forward:/fallback/loan
+# Actuator 설정 (프로덕션은 최소 노출, 인증 필수)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+      base-path: /management
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+    info:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: production
+      datacenter: ${DATACENTER}
+      pod: ${HOSTNAME}
+  health:
+    redis:
+      enabled: true
+    diskspace:
+      enabled: true
+      threshold: 10GB
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+        pushgateway:
+          enabled: true
+          address: ${PUSHGATEWAY_URL:http://prod-pushgateway.bluebank.internal:9091}
+          job: gateway-prod
+          grouping-key:
+            instance: ${HOSTNAME}
+            datacenter: ${DATACENTER}
 
-        # Card Service - 카드 관리
-        - id: card-service
-          uri: lb://CARD
-          predicates:
-            - Path=/api/cards/**
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: cardCB
-                fallbackUri: forward:/fallback/card
-
-        # Internal Account Service (for inter-service communication)
-        - id: internal-account-service
-          uri: lb://ACCOUNT
-          predicates:
-            - Path=/internal/accounts/**
-          filters:
-            - AddRequestHeader=X-Internal-Request, true
-
-        # Test route to httpbin
-        - id: test-route
-          uri: https://httpbin.org
-          predicates:
-            - Path=/httpbin/**
-          filters:
-            - StripPrefix=1
-
+# 로깅 설정 (프로덕션 - 최소 로그, 외부 로그 수집)
 logging:
   level:
-    org.springframework.cloud.gateway: INFO
-    reactor.netty: WARN
+    root: ERROR
+    org.springframework.cloud.gateway: WARN
+    org.springframework.cloud.gateway.route: WARN
+    org.springframework.cloud.loadbalancer: ERROR
+    com.netflix.discovery: ERROR
+    com.socoolheeya.bluebank: WARN
+  pattern:
+    console: "%d{ISO8601} [%X{traceId}] [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/gateway/gateway-prod.log
+    max-size: 1GB
+    max-history: 90
+  logback:
+    rollingpolicy:
+      file-name-pattern: /var/log/gateway/archived/gateway-prod-%d{yyyy-MM-dd}.%i.gz
+      clean-history-on-start: false
+
+# CORS 설정 (프로덕션 - 엄격한 설정)
+spring.cloud.gateway:
+  globalcors:
+    cors-configurations:
+      '[/**]':
+        allowedOrigins:
+          - "https://www.bluebank.com"
+          - "https://bluebank.com"
+          - "https://api.bluebank.com"
+          - "https://admin.bluebank.com"
+        allowedMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+        allowedHeaders:
+          - Authorization
+          - Content-Type
+          - X-Requested-With
+          - X-Transaction-Id
+        exposedHeaders:
+          - X-Rate-Limit-Remaining
+          - X-Rate-Limit-Reset
+          - X-Transaction-Id
+        allowCredentials: true
+        maxAge: 86400
+
+# Rate Limiting 설정 (프로덕션 - 엄격한 제한)
+rate-limit:
+  enabled: true
+  default-replenish-rate: 10
+  default-burst-capacity: 20
+  ip-based:
+    enabled: true
+    replenish-rate: 5
+    burst-capacity: 10
+  user-based:
+    enabled: true
+    replenish-rate: 15
+    burst-capacity: 30
+
+# JWT 설정 (프로덕션 - 보안 강화)
+jwt:
+  secret: ${JWT_SECRET}  # 필수: 환경 변수로 제공 (최소 512비트)
+  expiration: 1800000  # 30분
+  refresh-expiration: 86400000  # 24시간
+  algorithm: ${JWT_ALGORITHM:HS512}
+  issuer: ${JWT_ISSUER:bluebank.com}
+  audience: ${JWT_AUDIENCE:bluebank-api}
+
+# Circuit Breaker 설정 (프로덕션 - 엄격한 장애 격리)
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 500
+        slidingWindowType: TIME_BASED
+        minimumNumberOfCalls: 50
+        permittedNumberOfCallsInHalfOpenState: 10
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 60s
+        failureRateThreshold: 30
+        slowCallRateThreshold: 30
+        slowCallDurationThreshold: 10s
+        recordExceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+        ignoreExceptions:
+          - com.socoolheeya.bluebank.exception.BusinessException
+          - com.socoolheeya.bluebank.exception.ValidationException
+    instances:
+      accountCB:
+        baseConfig: default
+        minimumNumberOfCalls: 30
+        failureRateThreshold: 25
+      depositCB:
+        baseConfig: default
+        minimumNumberOfCalls: 30
+        failureRateThreshold: 25
+      loanCB:
+        baseConfig: default
+        minimumNumberOfCalls: 30
+        failureRateThreshold: 25
+      cardCB:
+        baseConfig: default
+        minimumNumberOfCalls: 30
+        failureRateThreshold: 25
+
+  retry:
+    configs:
+      default:
+        maxAttempts: 3
+        waitDuration: 1000ms
+        retryExceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+    instances:
+      accountCB:
+        baseConfig: default
+      depositCB:
+        baseConfig: default
+      loanCB:
+        baseConfig: default
+      cardCB:
+        baseConfig: default
+
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 5s
+        cancelRunningFuture: true
+
+  bulkhead:
+    configs:
+      default:
+        maxConcurrentCalls: 500
+        maxWaitDuration: 10ms
+    instances:
+      accountCB:
+        baseConfig: default
+        maxConcurrentCalls: 200
+      depositCB:
+        baseConfig: default
+        maxConcurrentCalls: 200
+      loanCB:
+        baseConfig: default
+        maxConcurrentCalls: 100
+      cardCB:
+        baseConfig: default
+        maxConcurrentCalls: 100
+
+# 보안 설정 (프로덕션 - 최고 수준)
+security:
+  require-ssl: true
+  headers:
+    content-security-policy: "default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; frame-ancestors 'none'"
+    strict-transport-security: "max-age=63072000; includeSubDomains; preload"
+    x-frame-options: "DENY"
+    x-content-type-options: "nosniff"
+    x-xss-protection: "1; mode=block"
+    referrer-policy: "strict-origin-when-cross-origin"
+    permissions-policy: "geolocation=(), microphone=(), camera=()"
+
+# 추가 프로덕션 설정
+trace:
+  sampling-rate: 0.01  # 1% 샘플링
+  export:
+    enabled: true
+    endpoint: ${TRACE_ENDPOINT:http://prod-jaeger.bluebank.internal:14268/api/traces}
+
+alerts:
+  enabled: true
+  webhook-url: ${ALERT_WEBHOOK_URL}
+  channels:
+    - slack
+    - pagerduty

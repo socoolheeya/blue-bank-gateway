@@ -1,0 +1,127 @@
+# ============================================
+# Blue Bank API Gateway - Development Environment Configuration
+# ============================================
+
+spring:
+  # Redis 설정 (개발)
+  data:
+    redis:
+      host: ${REDIS_HOST:dev-redis.bluebank.internal}
+      port: 6379
+      password: ${REDIS_PASSWORD:dev-redis-password}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+
+# Eureka Client 설정 (개발)
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://dev-eureka.bluebank.internal:8761/eureka}
+    fetch-registry: true
+    register-with-eureka: true
+    registry-fetch-interval-seconds: 15
+  instance:
+    hostname: ${HOSTNAME:gateway-dev}
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 15
+    lease-expiration-duration-in-seconds: 45
+    metadata-map:
+      zone: dev
+      environment: development
+
+# 서버 설정
+server:
+  port: ${SERVER_PORT:8080}
+
+# Actuator 설정 (개발은 모든 엔드포인트 노출)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+    gateway:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: dev
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# 로깅 설정 (개발은 상세 로그)
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: INFO
+    org.springframework.cloud.gateway.route: DEBUG
+    org.springframework.cloud.loadbalancer: INFO
+    com.netflix.discovery: INFO
+    com.socoolheeya.bluebank: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/gateway/gateway-dev.log
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 7
+
+# CORS 설정 (개발)
+spring.cloud.gateway:
+  globalcors:
+    cors-configurations:
+      '[/**]':
+        allowedOrigins:
+          - "https://dev.bluebank.com"
+          - "https://dev-admin.bluebank.com"
+          - "http://localhost:3000"
+        allowedMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        allowedHeaders: "*"
+        allowCredentials: true
+        maxAge: 3600
+
+# Rate Limiting 설정 (개발)
+rate-limit:
+  enabled: true
+  default-replenish-rate: 50
+  default-burst-capacity: 100
+
+# JWT 설정 (개발)
+jwt:
+  secret: ${JWT_SECRET:dev-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm}
+  expiration: 86400000  # 24시간
+
+# Circuit Breaker 설정 (개발)
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        waitDurationInOpenState: 20s
+        slowCallDurationThreshold: 3s
+    instances:
+      accountCB:
+        baseConfig: default
+        minimumNumberOfCalls: 5
+      depositCB:
+        baseConfig: default
+        minimumNumberOfCalls: 5
+      loanCB:
+        baseConfig: default
+        minimumNumberOfCalls: 5
+      cardCB:
+        baseConfig: default
+        minimumNumberOfCalls: 5
