@@ -56,12 +56,13 @@ management:
 logging:
   level:
     root: INFO
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.cloud.gateway.route: DEBUG
-    org.springframework.cloud.loadbalancer: DEBUG
+    org.springframework.cloud.gateway: TRACE
+    org.springframework.cloud.gateway.route: TRACE
+    org.springframework.cloud.loadbalancer: TRACE
+    org.springframework.cloud.loadbalancer.core: TRACE
     com.netflix.discovery: DEBUG
     com.socoolheeya.bluebank: DEBUG
-    reactor.netty: INFO
+    reactor.netty: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
 

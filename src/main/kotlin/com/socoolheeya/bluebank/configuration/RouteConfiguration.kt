@@ -21,22 +21,22 @@ class RouteConfiguration {
             // Account Service - 계좌 관리
             .route("account-service") { r ->
                 r.path("/api/accounts/**")
-                    .uri("http://localhost:8081")  // 직접 연결 (Service Discovery 문제 우회)
+                    .uri("lb://ACCOUNT")  // Service Discovery를 통한 로드 밸런싱
             }
             // Deposit Service - 예금 관리
             .route("deposit-service") { r ->
                 r.path("/api/deposits/**")
-                    .uri("http://localhost:8084")  // 직접 연결
+                    .uri("lb://DEPOSIT")  // Service Discovery를 통한 로드 밸런싱
             }
             // Loan Service - 대출 관리
             .route("loan-service") { r ->
                 r.path("/api/loans/**")
-                    .uri("http://localhost:8082")  // 직접 연결
+                    .uri("lb://LOAN")  // Service Discovery를 통한 로드 밸런싱
             }
             // Card Service - 카드 관리
             .route("card-service") { r ->
                 r.path("/api/cards/**")
-                    .uri("http://localhost:8083")  // 직접 연결
+                    .uri("lb://CARD")  // Service Discovery를 통한 로드 밸런싱
             }
             // Internal Account Service (for inter-service communication)
             .route("internal-account-service") { r ->
