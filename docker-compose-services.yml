@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Account Service
+  account:
+    build:
+      context: /Users/wonhee.lee/IdeaProjects/blue-bank/app/account
+      dockerfile: Dockerfile
+    image: blue-bank-account-service:latest
+    container_name: account-service
+    ports:
+      - "8101:8101"
+    environment:
+      SPRING_APPLICATION_NAME: account
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    networks:
+      - gateway-network
+    depends_on:
+      eureka:
+        condition: service_healthy
+
+  # Deposit Service
+  deposit:
+    build:
+      context: /Users/wonhee.lee/IdeaProjects/blue-bank/app/deposit
+      dockerfile: Dockerfile
+    image: blue-bank-deposit-service:latest
+    container_name: deposit-service
+    ports:
+      - "8201:8201"
+    environment:
+      SPRING_APPLICATION_NAME: deposit
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    networks:
+      - gateway-network
+    depends_on:
+      eureka:
+        condition: service_healthy
+
+  # Loan Service
+  loan:
+    build:
+      context: /Users/wonhee.lee/IdeaProjects/blue-bank/app/loan
+      dockerfile: Dockerfile
+    image: blue-bank-loan-service:latest
+    container_name: loan-service
+    ports:
+      - "8301:8301"
+    environment:
+      SPRING_APPLICATION_NAME: loan
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    networks:
+      - gateway-network
+    depends_on:
+      eureka:
+        condition: service_healthy
+
+  # Card Service
+  card:
+    build:
+      context: /Users/wonhee.lee/IdeaProjects/blue-bank/app/card
+      dockerfile: Dockerfile
+    image: blue-bank-card-service:latest
+    container_name: card-service
+    ports:
+      - "8401:8401"
+    environment:
+      SPRING_APPLICATION_NAME: card
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    networks:
+      - gateway-network
+    depends_on:
+      eureka:
+        condition: service_healthy
+
+networks:
+  gateway-network:
+    external: true
