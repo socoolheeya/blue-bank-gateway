@@ -1,0 +1,29 @@
+services:
+  eureka:
+    image: blue-bank-eureka-server:latest
+    container_name: eureka-server
+    build:
+      context: ../blue-bank-eureka-server
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+    networks:
+      - gateway-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  gateway:
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      EUREKA_URI: http://eureka:8761/eureka
+    depends_on:
+      eureka:
+        condition: service_healthy
+

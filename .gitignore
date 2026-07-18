@@ -40,3 +40,5 @@ out/
 .kotlin
 
 .env
+.env.dev
+.env.prod

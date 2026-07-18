@@ -1,24 +1,4 @@
 services:
-  eureka:
-    image: blue-bank-eureka-server:latest
-    container_name: eureka-server
-    build:
-      context: ../blue-bank-eureka-server
-      dockerfile: Dockerfile
-    ports:
-      - "8761:8761"
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
-    networks:
-      - gateway-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 40s
-
   nginx:
     image: nginx:1.26-alpine
     container_name: api-nginx
@@ -52,16 +32,12 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       JWT_SECRET: ${JWT_SECRET}
-      EUREKA_URI: http://eureka:8761/eureka
     depends_on:
       redis:
-        condition: service_healthy
-      eureka:
         condition: service_healthy
     networks:
       - gateway-network

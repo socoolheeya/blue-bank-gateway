@@ -15,25 +15,98 @@ blue-bank-gateway/
 │   ├── scale-all.sh                 # 📈 동시 스케일링
 │   ├── monitor.sh                   # 📊 실시간 모니터링
 │   ├── quick-test.sh                # 🧪 빠른 테스트
+│   ├── deploy-dev.sh                # 🚀 개발 서버 Gateway 배포
 │   └── test-load-balancing.sh       # 🔍 로드 밸런싱 확인
 ├── nginx/                    # Nginx configurations
-├── docker-compose.yml        # Infrastructure stack
+├── docker-compose.yml        # 공통 Gateway/Nginx/Redis 스택
+├── docker-compose.local.yml  # 로컬 Eureka 포함 구성
+├── docker-compose.dev.yml    # 개발 서버 외부 Eureka 구성
+├── docker-compose.prod.yml   # 운영 서버 외부 Eureka 구성
 ├── docker-compose-services.yml  # Business services
 └── README.md
 ```
 
 ## 🚀 Quick Start
 
-### 1. 인프라 스택 시작 (Eureka, Gateway, Redis, Nginx)
-```bash
-# 인프라 서비스 시작
-docker-compose up -d
+### 로컬 환경
 
-# 인프라 서비스 중지
-docker-compose down
+로컬에서는 `../blue-bank-eureka-server` 프로젝트를 함께 빌드하여 Eureka, Gateway, Redis, Nginx를 실행합니다.
+
+```bash
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.local.yml \
+  up --build -d
+
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.local.yml \
+  down
 ```
 
-### 2. Blue Bank 서비스 시작
+### 개발 서버 배포
+
+개발 환경의 Eureka Server는 별도 서버에서 실행됩니다. 프로젝트 루트에 `.env.dev`를 생성합니다.
+
+```dotenv
+EUREKA_URI=http://dev-eureka.example.internal:8761/eureka
+JWT_SECRET=replace-with-a-secret-at-least-256-bits-long
+REDIS_PASSWORD=replace-with-the-development-redis-password
+```
+
+배포 스크립트를 실행합니다.
+
+```bash
+cd /opt/blue-bank-gateway
+./scripts/deploy-dev.sh
+```
+
+스크립트는 다음 Compose 명령과 동일합니다.
+
+```bash
+docker compose --env-file .env.dev \
+  -f docker-compose.yml \
+  -f docker-compose.dev.yml \
+  up --build -d
+```
+
+다른 위치의 환경 파일을 사용하려면 `ENV_FILE`을 지정합니다.
+
+```bash
+ENV_FILE=/secure/config/gateway.env ./scripts/deploy-dev.sh
+```
+
+배포 상태와 로그는 다음과 같이 확인합니다.
+
+```bash
+docker compose --env-file .env.dev \
+  -f docker-compose.yml -f docker-compose.dev.yml ps
+
+docker compose --env-file .env.dev \
+  -f docker-compose.yml -f docker-compose.dev.yml logs -f gateway nginx
+```
+
+### 운영 서버 배포
+
+운영 서버의 `.env.prod`에 실제 운영 Eureka 주소와 비밀값을 설정한 후 실행합니다.
+
+```dotenv
+EUREKA_URI=http://prod-eureka.example.internal:8761/eureka
+JWT_SECRET=replace-with-a-production-secret-at-least-256-bits-long
+REDIS_PASSWORD=replace-with-the-production-redis-password
+```
+
+```bash
+docker compose --env-file .env.prod \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  up --build -d
+```
+
+dev/prod의 `EUREKA_URI`는 Eureka 프로젝트의 파일 경로가 아니라 Gateway 서버에서 접근 가능한 HTTP URL이어야 합니다. 외부 Eureka는 같은 Compose 프로젝트가 아니므로 `depends_on`으로 관리되지 않습니다.
+
+### Blue Bank 비즈니스 서비스 시작
+
 ```bash
 # 기본 설정으로 모든 서비스 시작 (Account:3, Deposit:5, Loan:6, Card:7)
 ./scripts/restart-services-multi-instance.sh
@@ -159,8 +232,11 @@ ACCOUNT_INSTANCES=5 DEPOSIT_INSTANCES=10 ./scripts/restart-services-multi-instan
 
 #### 📌 시나리오 1: 초기 시작
 ```bash
-# 1. 인프라 스택 시작
-docker-compose up -d
+# 1. 로컬 인프라 스택 시작
+docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.local.yml \
+  up --build -d
 
 # 2. 30초 대기
 sleep 30
@@ -241,9 +317,12 @@ sleep 30
 - lb://CARD → Card Service (Load Balanced)
 ```
 
-### Environment Variables (.env)
+### Environment Variables
+
+로컬 Compose는 별도 Eureka 환경변수가 필요하지 않습니다. 개발 및 운영 서버는 각각 `.env.dev`, `.env.prod`를 사용합니다.
+
 ```env
-SPRING_PROFILES_ACTIVE=local
+EUREKA_URI=http://eureka-server.example.internal:8761/eureka
 REDIS_PASSWORD=yourpassword
 JWT_SECRET=your-secret-key-must-be-at-least-256-bits
 ```

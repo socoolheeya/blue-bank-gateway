@@ -1,5 +1,19 @@
 # Blue Bank Gateway Scripts
 
+## 개발 서버 배포
+
+프로젝트 루트에 `.env.dev`를 준비한 후 다음 명령으로 Gateway 개발 환경을 배포합니다.
+
+```bash
+./scripts/deploy-dev.sh
+```
+
+스크립트는 `docker-compose.yml`과 `docker-compose.dev.yml`을 병합하고 `docker compose up --build -d`를 실행합니다. 다른 환경 파일을 검증할 때는 `ENV_FILE`로 경로를 덮어쓸 수 있습니다.
+
+```bash
+ENV_FILE=/secure/path/gateway.env ./scripts/deploy-dev.sh
+```
+
 ## 📁 스크립트 목록
 
 ### 1. **service-manager.sh** - 🔧 메인 서비스 관리 도구
