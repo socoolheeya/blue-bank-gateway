@@ -7,7 +7,7 @@ data:
   SPRING_PROFILES_ACTIVE: dev
   REDIS_HOST: redis
   REDIS_PORT: "6379"
-  SERVICES_ACCOUNT_URL: http://account:8100
-  SERVICES_DEPOSIT_URL: http://deposit:8200
-  SERVICES_LOAN_URL: http://loan:8300
-  SERVICES_CARD_URL: http://card:8400
+  SERVICES_ACCOUNT_URL: http://blue-bank-account:8100
+  SERVICES_DEPOSIT_URL: http://blue-bank-deposit:8200
+  SERVICES_LOAN_URL: http://blue-bank-loan:8300
+  SERVICES_CARD_URL: http://blue-bank-card:8400
