@@ -27,7 +27,7 @@ blue-bank-gateway/
 
 ## 🚀 Quick Start
 
-> NKS, Envoy Gateway, and Argo CD deployment is documented in [Kubernetes deployment](docs/KUBERNETES_DEPLOYMENT.md). Docker Compose remains for local and transitional server deployments.
+> Kubernetes 애플리케이션 배포는 [Kubernetes 배포](docs/KUBERNETES_DEPLOYMENT.md), NCP 인프라 생성은 [NCP NKS Terraform 인프라 생성 및 배포](docs/NCP_TERRAFORM_DEPLOYMENT.md)를 참고합니다. Docker Compose는 로컬 및 전환 배포용으로 유지합니다.
 
 ### 로컬 환경
 

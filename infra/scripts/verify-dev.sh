@@ -23,9 +23,9 @@ test "$ready_nodes" -eq 2 || {
 "${kc[@]}" wait --for=condition=Available deployment/envoy-gateway -n envoy-gateway-system --timeout=10m
 "${kc[@]}" rollout status deployment/blue-bank-gateway -n blue-bank --timeout=10m
 "${kc[@]}" rollout status statefulset/redis -n blue-bank --timeout=10m
-"${kc[@]}" wait --for=condition=Programmed gateway/blue-bank-gateway -n blue-bank --timeout=10m
+"${kc[@]}" wait --for=condition=Programmed gateway/blue-bank -n blue-bank --timeout=10m
 
-external_ip="$("${kc[@]}" get gateway blue-bank-gateway -n blue-bank \
+external_ip="$("${kc[@]}" get gateway blue-bank -n blue-bank \
   -o jsonpath='{.status.addresses[0].value}')"
 
 test -n "$external_ip" || {
