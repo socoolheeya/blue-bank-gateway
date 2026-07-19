@@ -1,0 +1,14 @@
+region      = "KR"
+zone        = "KR-1"
+name_prefix = "blue-bank-dev"
+
+vpc_cidr               = "10.0.0.0/16"
+worker_subnet_cidr     = "10.0.10.0/24"
+lb_private_subnet_cidr = "10.0.20.0/24"
+lb_public_subnet_cidr  = "10.0.30.0/24"
+nat_subnet_cidr        = "10.0.40.0/24"
+
+# 문서용 TEST-NET 주소이므로 실제 Terraform 실행 PC/CI의 공인 IP /32로 변경한다.
+allowed_api_cidrs = ["203.0.113.10/32"]
+ncr_endpoint       = "blue-bank-dev.kr.ncr.ntruss.com"
+return_protection  = true

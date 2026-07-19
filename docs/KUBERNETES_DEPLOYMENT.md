@@ -2,7 +2,7 @@
 
 ## Architecture
 
-NKS Kubernetes 1.34 runs Envoy Gateway v1.8.2 in front of Spring Cloud Gateway. Kubernetes Services and DNS replace Eureka. Spring Cloud Gateway retains JWT authentication, Redis rate limiting, circuit breakers, fallbacks, and business filters.
+NKS Kubernetes 1.34 runs Envoy Gateway v1.8.2 in front of Spring Cloud Gateway. Kubernetes Services and DNS provide service discovery. Spring Cloud Gateway retains JWT authentication, Redis rate limiting, circuit breakers, fallbacks, and business filters.
 
 ## Required substitutions
 
@@ -70,7 +70,7 @@ curl "http://EXTERNAL_IP/actuator/health"
 curl "http://EXTERNAL_IP/api/accounts"
 ```
 
-Check service discovery without Eureka:
+Check Kubernetes Service DNS discovery:
 
 ```bash
 kubectl -n blue-bank exec deploy/blue-bank-gateway -- getent hosts account deposit loan card redis

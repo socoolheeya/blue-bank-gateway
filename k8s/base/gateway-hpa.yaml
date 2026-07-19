@@ -2,6 +2,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: blue-bank-gateway
+  namespace: blue-bank
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
