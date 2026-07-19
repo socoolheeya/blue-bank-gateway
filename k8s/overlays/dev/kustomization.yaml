@@ -4,5 +4,5 @@ resources:
   - ../../base
 images:
   - name: blue-bank-gateway
-    newName: REGISTRY_NAME.kr.ncr.ntruss.com/blue-bank-gateway
-    newTag: dev
+    newName: blue-bank-dev.kr.ncr.ntruss.com/blue-bank-gateway
+    newTag: dev-ef6c1f3
