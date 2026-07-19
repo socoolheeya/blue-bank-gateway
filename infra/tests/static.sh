@@ -48,7 +48,7 @@ if git ls-files | rg '(^|/)(backend\.hcl|terraform\.tfvars|[^/]+\.tfstate(\..*)?
   exit 1
 fi
 
-if rg -n -i 'eureka|nginx' infra; then
+if rg -n -i 'eureka|nginx' infra/modules infra/environments infra/scripts; then
   echo "Eureka or Nginx must not be part of the NKS infrastructure" >&2
   exit 1
 fi
