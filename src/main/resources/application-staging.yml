@@ -22,24 +22,6 @@ spring:
           refresh:
             period: 60s
 
-# Eureka Client 설정 (프로덕션 - Multi-AZ HA 구성)
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URI:http://staging-eureka-1.bluebank.internal:8761/eureka,http://staging-eureka-2.bluebank.internal:8761/eureka}
-    fetch-registry: true
-    register-with-eureka: true
-    registry-fetch-interval-seconds: 10
-  instance:
-    hostname: ${HOSTNAME:gateway-staging}
-    prefer-ip-address: true
-    lease-renewal-interval-in-seconds: 10
-    lease-expiration-duration-in-seconds: 30
-    metadata-map:
-      zone: staging
-      environment: staging
-      datacenter: ${DATACENTER:us-east-1}
-
 # 서버 설정 (프로덕션 최적화)
 server:
   port: ${SERVER_PORT:8080}

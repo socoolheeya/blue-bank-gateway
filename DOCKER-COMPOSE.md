@@ -9,7 +9,6 @@
 services:
   gateway:    # API Gateway (포트: 8080)
   redis:      # 캐싱 및 Rate Limiting (포트: 6379)
-  nginx:      # 리버스 프록시 (포트: 80, 443)
 ```
 
 환경별로 다음 override 파일 중 하나를 반드시 함께 사용합니다.
@@ -74,7 +73,6 @@ graph LR
     A[docker-compose.yml + environment override] --> B[Gateway Stack]
     B --> B2[Gateway]
     B --> B3[Redis]
-    B --> B4[Nginx]
     E[External Eureka Server] -.Service Discovery.-> B2
 
     C[docker-compose-services.yml] --> D[Business Services]

@@ -3,17 +3,11 @@
 # ============================================
 
 spring:
-  # Redis 설정 (프로덕션 클러스터 - HA 구성)
+  # Redis 설정 (프로덕션 외부 Redis)
   data:
     redis:
-      cluster:
-        nodes:
-          - ${REDIS_NODE_1:prod-redis-1.bluebank.internal:6379}
-          - ${REDIS_NODE_2:prod-redis-2.bluebank.internal:6379}
-          - ${REDIS_NODE_3:prod-redis-3.bluebank.internal:6379}
-          - ${REDIS_NODE_4:prod-redis-4.bluebank.internal:6379}
-          - ${REDIS_NODE_5:prod-redis-5.bluebank.internal:6379}
-          - ${REDIS_NODE_6:prod-redis-6.bluebank.internal:6379}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD}  # 필수: 환경 변수로 제공
       timeout: 15000ms
       lettuce:
@@ -21,38 +15,6 @@ spring:
           max-active: 64
           max-idle: 32
           min-idle: 8
-        cluster:
-          refresh:
-            adaptive: true
-            period: 30s
-      sentinel:
-        master: blue-bank-master
-        nodes:
-          - ${SENTINEL_NODE_1:prod-sentinel-1.bluebank.internal:26379}
-          - ${SENTINEL_NODE_2:prod-sentinel-2.bluebank.internal:26379}
-          - ${SENTINEL_NODE_3:prod-sentinel-3.bluebank.internal:26379}
-
-# Eureka Client 설정 (프로덕션 - Multi-AZ HA 구성)
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URI:http://prod-eureka-1.bluebank.internal:8761/eureka,http://prod-eureka-2.bluebank.internal:8761/eureka,http://prod-eureka-3.bluebank.internal:8761/eureka}
-    fetch-registry: true
-    register-with-eureka: true
-    registry-fetch-interval-seconds: 5
-    eureka-server-read-timeout-seconds: 15
-    eureka-server-connect-timeout-seconds: 5
-  instance:
-    hostname: ${HOSTNAME}
-    prefer-ip-address: true
-    lease-renewal-interval-in-seconds: 5
-    lease-expiration-duration-in-seconds: 15
-    metadata-map:
-      zone: ${ZONE:prod}
-      environment: production
-      datacenter: ${DATACENTER}
-      version: ${APP_VERSION}
-      deployment-id: ${DEPLOYMENT_ID}
 
 # 서버 설정 (프로덕션 최적화)
 server:

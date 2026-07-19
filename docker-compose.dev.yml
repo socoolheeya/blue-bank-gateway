@@ -2,5 +2,3 @@ services:
   gateway:
     environment:
       SPRING_PROFILES_ACTIVE: dev
-      EUREKA_URI: ${EUREKA_URI:?EUREKA_URI must be set to the external Eureka server URL}
-

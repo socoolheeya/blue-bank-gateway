@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blue-bank-gateway
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: gateway
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          startupProbe:
+            httpGet:
+              path: /management/health/readiness
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /management/health/readiness
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /management/health/liveness
+              port: http

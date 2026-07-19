@@ -17,8 +17,7 @@ blue-bank-gateway/
 │   ├── quick-test.sh                # 🧪 빠른 테스트
 │   ├── deploy-dev.sh                # 🚀 개발 서버 Gateway 배포
 │   └── test-load-balancing.sh       # 🔍 로드 밸런싱 확인
-├── nginx/                    # Nginx configurations
-├── docker-compose.yml        # 공통 Gateway/Nginx/Redis 스택
+├── docker-compose.yml        # 공통 Gateway/Redis 스택
 ├── docker-compose.local.yml  # 로컬 Eureka 포함 구성
 ├── docker-compose.dev.yml    # 개발 서버 외부 Eureka 구성
 ├── docker-compose.prod.yml   # 운영 서버 외부 Eureka 구성
@@ -28,9 +27,11 @@ blue-bank-gateway/
 
 ## 🚀 Quick Start
 
+> NKS, Envoy Gateway, and Argo CD deployment is documented in [Kubernetes deployment](docs/KUBERNETES_DEPLOYMENT.md). Docker Compose remains for local and transitional server deployments.
+
 ### 로컬 환경
 
-로컬에서는 `../blue-bank-eureka-server` 프로젝트를 함께 빌드하여 Eureka, Gateway, Redis, Nginx를 실행합니다.
+로컬에서는 Gateway와 Redis를 실행합니다. 업무 서비스 주소는 `SERVICES_*_URL` 환경변수로 덮어쓸 수 있습니다.
 
 ```bash
 docker compose \
@@ -49,7 +50,6 @@ docker compose \
 개발 환경의 Eureka Server는 별도 서버에서 실행됩니다. 프로젝트 루트에 `.env.dev`를 생성합니다.
 
 ```dotenv
-EUREKA_URI=http://dev-eureka.example.internal:8761/eureka
 JWT_SECRET=replace-with-a-secret-at-least-256-bits-long
 REDIS_PASSWORD=replace-with-the-development-redis-password
 ```
@@ -83,7 +83,7 @@ docker compose --env-file .env.dev \
   -f docker-compose.yml -f docker-compose.dev.yml ps
 
 docker compose --env-file .env.dev \
-  -f docker-compose.yml -f docker-compose.dev.yml logs -f gateway nginx
+  -f docker-compose.yml -f docker-compose.dev.yml logs -f gateway
 ```
 
 ### 운영 서버 배포
@@ -91,7 +91,6 @@ docker compose --env-file .env.dev \
 운영 서버의 `.env.prod`에 실제 운영 Eureka 주소와 비밀값을 설정한 후 실행합니다.
 
 ```dotenv
-EUREKA_URI=http://prod-eureka.example.internal:8761/eureka
 JWT_SECRET=replace-with-a-production-secret-at-least-256-bits-long
 REDIS_PASSWORD=replace-with-the-production-redis-password
 ```
@@ -103,7 +102,7 @@ docker compose --env-file .env.prod \
   up --build -d
 ```
 
-dev/prod의 `EUREKA_URI`는 Eureka 프로젝트의 파일 경로가 아니라 Gateway 서버에서 접근 가능한 HTTP URL이어야 합니다. 외부 Eureka는 같은 Compose 프로젝트가 아니므로 `depends_on`으로 관리되지 않습니다.
+Kubernetes 배포에서는 Eureka 대신 `account`, `deposit`, `loan`, `card` Service DNS를 사용합니다.
 
 ### Blue Bank 비즈니스 서비스 시작
 
@@ -322,7 +321,6 @@ sleep 30
 로컬 Compose는 별도 Eureka 환경변수가 필요하지 않습니다. 개발 및 운영 서버는 각각 `.env.dev`, `.env.prod`를 사용합니다.
 
 ```env
-EUREKA_URI=http://eureka-server.example.internal:8761/eureka
 REDIS_PASSWORD=yourpassword
 JWT_SECRET=your-secret-key-must-be-at-least-256-bits
 ```

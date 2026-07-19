@@ -40,5 +40,7 @@ out/
 .kotlin
 
 .env
+.env.*
+!.env.example
 .env.dev
 .env.prod

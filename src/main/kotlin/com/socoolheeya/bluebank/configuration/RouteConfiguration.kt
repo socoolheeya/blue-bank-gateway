@@ -6,6 +6,7 @@ import org.springframework.cloud.gateway.route.RouteLocator
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.beans.factory.annotation.Value
 
 @Configuration
 class RouteConfiguration {
@@ -16,27 +17,48 @@ class RouteConfiguration {
     }
 
     @Bean
-    fun customRouteLocator(builder: RouteLocatorBuilder, redisRateLimiter: RedisRateLimiter, ipKeyResolver: KeyResolver): RouteLocator {
+    fun customRouteLocator(
+        builder: RouteLocatorBuilder,
+        redisRateLimiter: RedisRateLimiter,
+        ipKeyResolver: KeyResolver,
+        @Value("\${services.account.url:http://account:8100}") accountUrl: String,
+        @Value("\${services.deposit.url:http://deposit:8200}") depositUrl: String,
+        @Value("\${services.loan.url:http://loan:8300}") loanUrl: String,
+        @Value("\${services.card.url:http://card:8400}") cardUrl: String
+    ): RouteLocator {
+        fun org.springframework.cloud.gateway.route.builder.GatewayFilterSpec.policies(name: String, fallback: String) =
+            requestRateLimiter { config ->
+                config.setRateLimiter(redisRateLimiter)
+                config.setKeyResolver(ipKeyResolver)
+            }.circuitBreaker { config ->
+                config.setName(name)
+                config.setFallbackUri("forward:/fallback/$fallback")
+            }
+
         return builder.routes()
             // Account Service - 계좌 관리
             .route("account-service") { r ->
                 r.path("/api/accounts/**")
-                    .uri("lb://ACCOUNT")  // Service Discovery를 통한 로드 밸런싱
+                    .filters { it.policies("accountCB", "account") }
+                    .uri(accountUrl)
             }
             // Deposit Service - 예금 관리
             .route("deposit-service") { r ->
                 r.path("/api/deposits/**")
-                    .uri("lb://DEPOSIT")  // Service Discovery를 통한 로드 밸런싱
+                    .filters { it.policies("depositCB", "deposit") }
+                    .uri(depositUrl)
             }
             // Loan Service - 대출 관리
             .route("loan-service") { r ->
                 r.path("/api/loans/**")
-                    .uri("lb://LOAN")  // Service Discovery를 통한 로드 밸런싱
+                    .filters { it.policies("loanCB", "loan") }
+                    .uri(loanUrl)
             }
             // Card Service - 카드 관리
             .route("card-service") { r ->
                 r.path("/api/cards/**")
-                    .uri("lb://CARD")  // Service Discovery를 통한 로드 밸런싱
+                    .filters { it.policies("cardCB", "card") }
+                    .uri(cardUrl)
             }
             // Internal Account Service (for inter-service communication)
             .route("internal-account-service") { r ->
@@ -44,7 +66,7 @@ class RouteConfiguration {
                     .filters { f ->
                         f.addRequestHeader("X-Internal-Request", "true")
                     }
-                    .uri("lb://ACCOUNT")
+                    .uri(accountUrl)
             }
             // Test route to httpbin.org
             .route("test-route") { r ->

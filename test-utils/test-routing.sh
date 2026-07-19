@@ -131,15 +131,6 @@ else
 fi
 echo ""
 
-echo -e "${BLUE}📋 8. Nginx를 통한 라우팅 테스트 (외부 접근)${NC}"
-echo "-------------------------------------------"
-echo "Nginx가 healthy 상태가 되면 다음 명령어로 테스트하세요:"
-echo ""
-echo -e "${YELLOW}curl -v http://localhost/search/api/test${NC}"
-echo -e "${YELLOW}curl -v http://localhost/payment/api/test${NC}"
-echo -e "${YELLOW}curl -v http://localhost/actuator/health${NC}"
-echo ""
-
 echo "============================================"
 echo "✅ 라우팅 테스트 완료"
 echo "============================================"

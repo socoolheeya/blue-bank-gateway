@@ -16,23 +16,6 @@ spring:
           max-idle: 8
           min-idle: 2
 
-# Eureka Client 설정 (개발)
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URI:http://dev-eureka.bluebank.internal:8761/eureka}
-    fetch-registry: true
-    register-with-eureka: true
-    registry-fetch-interval-seconds: 15
-  instance:
-    hostname: ${HOSTNAME:gateway-dev}
-    prefer-ip-address: true
-    lease-renewal-interval-in-seconds: 15
-    lease-expiration-duration-in-seconds: 45
-    metadata-map:
-      zone: dev
-      environment: development
-
 # 서버 설정
 server:
   port: ${SERVER_PORT:8080}
@@ -46,6 +29,8 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+      probes:
+        enabled: true
     gateway:
       enabled: true
   metrics:
@@ -63,8 +48,6 @@ logging:
     root: INFO
     org.springframework.cloud.gateway: INFO
     org.springframework.cloud.gateway.route: DEBUG
-    org.springframework.cloud.loadbalancer: INFO
-    com.netflix.discovery: INFO
     com.socoolheeya.bluebank: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

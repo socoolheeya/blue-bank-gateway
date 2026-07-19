@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: blue-bank-gateway
+spec:
+  selector:
+    app.kubernetes.io/name: blue-bank-gateway
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
