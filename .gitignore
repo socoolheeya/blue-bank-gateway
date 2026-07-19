@@ -64,3 +64,4 @@ terraform.rc
 **/backend.hcl
 **/terraform.tfvars
 **/kubeconfig
+infra/modules/**/.terraform.lock.hcl

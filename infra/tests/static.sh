@@ -8,9 +8,11 @@ required_files=(
   infra/modules/network/main.tf
   infra/modules/network/variables.tf
   infra/modules/network/outputs.tf
+  infra/modules/network/versions.tf
   infra/modules/nks/main.tf
   infra/modules/nks/variables.tf
   infra/modules/nks/outputs.tf
+  infra/modules/nks/versions.tf
   infra/environments/dev/backend.tf
   infra/environments/dev/providers.tf
   infra/environments/dev/main.tf
