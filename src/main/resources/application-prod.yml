@@ -79,7 +79,6 @@ logging:
     org.springframework.cloud.gateway: WARN
     org.springframework.cloud.gateway.route: WARN
     org.springframework.cloud.loadbalancer: ERROR
-    com.netflix.discovery: ERROR
     com.socoolheeya.bluebank: WARN
   pattern:
     console: "%d{ISO8601} [%X{traceId}] [%thread] %-5level %logger{36} - %msg%n"
