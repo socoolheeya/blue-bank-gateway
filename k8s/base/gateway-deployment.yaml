@@ -18,6 +18,8 @@ spec:
       labels:
         app.kubernetes.io/name: blue-bank-gateway
     spec:
+      imagePullSecrets:
+        - name: ncr-registry
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
