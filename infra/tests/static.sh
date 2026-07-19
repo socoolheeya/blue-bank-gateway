@@ -53,4 +53,27 @@ if rg -n -i 'eureka|nginx' infra/modules infra/environments infra/scripts; then
   exit 1
 fi
 
+rendered_dev="$(mktemp)"
+trap 'rm -f "$rendered_dev"' EXIT
+kubectl kustomize k8s/overlays/dev >"$rendered_dev"
+
+if awk 'BEGIN { RS="---" } /kind: GatewayClass/ && /namespace:/ { found=1 } END { exit found ? 0 : 1 }' "$rendered_dev"; then
+  echo "GatewayClass must remain cluster-scoped without metadata.namespace" >&2
+  exit 1
+fi
+
+for kind in ConfigMap Service Deployment StatefulSet PodDisruptionBudget HorizontalPodAutoscaler Gateway HTTPRoute; do
+  awk -v expected_kind="$kind" '
+    BEGIN { RS="---"; found=0 }
+    $0 ~ "kind: " expected_kind "([[:space:]]|$)" {
+      found=1
+      if ($0 !~ /namespace: blue-bank/) exit 2
+    }
+    END { if (!found) exit 1 }
+  ' "$rendered_dev" || {
+    echo "$kind must render in namespace blue-bank" >&2
+    exit 1
+  }
+done
+
 echo "Terraform static checks passed"
