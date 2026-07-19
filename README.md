@@ -9,6 +9,12 @@ blue-bank-gateway/
 ├── src/                      # Source code
 ├── build/                    # Build outputs
 ├── docker/                   # Docker configurations
+├── infra/                    # NCP VPC/NKS Terraform 및 부트스트랩
+├── k8s/                      # Kubernetes Base/Dev/Prod manifests
+├── argocd/                   # Argo CD Application 선언
+├── docs/                     # 설계·배포·운영 문서
+├── service-configs/          # Compose 전환용 서비스 설정
+├── test-utils/               # 테스트 보조 도구
 ├── scripts/                  # Management scripts
 │   ├── service-manager.sh           # 🔧 메인 서비스 관리 도구
 │   ├── restart-services-multi-instance.sh  # 🔄 전체 서비스 재시작
@@ -18,9 +24,9 @@ blue-bank-gateway/
 │   ├── deploy-dev.sh                # 🚀 개발 서버 Gateway 배포
 │   └── test-load-balancing.sh       # 🔍 로드 밸런싱 확인
 ├── docker-compose.yml        # 공통 Gateway/Redis 스택
-├── docker-compose.local.yml  # 로컬 Eureka 포함 구성
-├── docker-compose.dev.yml    # 개발 서버 외부 Eureka 구성
-├── docker-compose.prod.yml   # 운영 서버 외부 Eureka 구성
+├── docker-compose.local.yml  # 로컬 전환 구성
+├── docker-compose.dev.yml    # 개발 전환 구성
+├── docker-compose.prod.yml   # 운영 전환 구성
 ├── docker-compose-services.yml  # Business services
 └── README.md
 ```
@@ -45,9 +51,9 @@ docker compose \
   down
 ```
 
-### 개발 서버 배포
+### 개발 Compose 전환 배포
 
-개발 환경의 Eureka Server는 별도 서버에서 실행됩니다. 프로젝트 루트에 `.env.dev`를 생성합니다.
+NKS 개발 배포는 [NCP NKS Terraform 배포 가이드](docs/NCP_TERRAFORM_DEPLOYMENT.md)를 사용합니다. Compose를 임시로 사용할 때만 프로젝트 루트에 `.env.dev`를 생성합니다.
 
 ```dotenv
 JWT_SECRET=replace-with-a-secret-at-least-256-bits-long
@@ -86,9 +92,9 @@ docker compose --env-file .env.dev \
   -f docker-compose.yml -f docker-compose.dev.yml logs -f gateway
 ```
 
-### 운영 서버 배포
+### 운영 Compose 전환 배포
 
-운영 서버의 `.env.prod`에 실제 운영 Eureka 주소와 비밀값을 설정한 후 실행합니다.
+운영 Kubernetes 전환 중 Compose를 사용할 때만 `.env.prod`에 비밀값을 설정합니다.
 
 ```dotenv
 JWT_SECRET=replace-with-a-production-secret-at-least-256-bits-long
@@ -122,7 +128,7 @@ Kubernetes 배포에서는 Eureka 대신 `account`, `deposit`, `loan`, `card` Se
 | Service | Gateway Route | Port Range | Default Instances |
 |---------|--------------|------------|-------------------|
 | Gateway | - | 8080 | 1 |
-| Eureka | - | 8761 | 1 |
+| Envoy Gateway | - | 80 | 1 |
 | Account | /api/accounts | 8100-8199 | 3 |
 | Deposit | /api/deposits | 8200-8299 | 5 |
 | Loan | /api/loans | 8300-8399 | 6 |

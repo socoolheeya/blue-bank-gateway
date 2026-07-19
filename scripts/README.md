@@ -1,6 +1,8 @@
 # Blue Bank Gateway Scripts
 
-## 개발 서버 배포
+이 폴더의 스크립트는 Docker Compose 전환·로컬 업무 서비스 운영용입니다. NCP NKS 배포는 [`infra/scripts`](../infra/scripts/README.md)를 사용합니다.
+
+## 개발 Compose 전환 배포
 
 프로젝트 루트에 `.env.dev`를 준비한 후 다음 명령으로 Gateway 개발 환경을 배포합니다.
 
@@ -83,7 +85,7 @@ ACCOUNT_INSTANCES=5 DEPOSIT_INSTANCES=10 ./restart-services-multi-instance.sh
 # 특징
 - 5초마다 자동 새로고침
 - Docker 컨테이너 상태 표시
-- Eureka 등록 상태 표시
+- Compose 컨테이너 상태 표시
 - 메모리 사용량 표시
 - Ctrl+C로 종료
 ```
@@ -99,7 +101,6 @@ ACCOUNT_INSTANCES=5 DEPOSIT_INSTANCES=10 ./restart-services-multi-instance.sh
 - 각 서비스 10회 요청
 - 응답 시간 측정
 - HTTP 상태 코드 확인
-- Eureka 등록 확인
 - Gateway 라우트 확인
 ```
 

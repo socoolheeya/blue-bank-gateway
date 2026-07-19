@@ -38,7 +38,8 @@ rg -q 'resource "ncloud_nks_cluster"' infra/modules/nks/main.tf
 rg -q 'resource "ncloud_nks_node_pool"' infra/modules/nks/main.tf
 rg -q 'ip_acl_default_action[[:space:]]*=[[:space:]]*"deny"' infra/modules/nks/main.tf
 
-if rg -n '(NCLOUD_ACCESS_KEY|NCLOUD_SECRET_KEY)[[:space:]]*=[[:space:]]*"[^"$]+' infra; then
+if rg -n '(NCLOUD_ACCESS_KEY|NCLOUD_SECRET_KEY)[[:space:]]*=[[:space:]]*"[^"$]+' \
+  infra/modules infra/environments --glob '*.tf' --glob '*.hcl' --glob '*.tfvars*'; then
   echo "hard-coded NCP credential detected" >&2
   exit 1
 fi
