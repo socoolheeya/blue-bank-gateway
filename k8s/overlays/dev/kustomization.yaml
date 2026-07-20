@@ -5,4 +5,4 @@ resources:
 images:
   - name: blue-bank-gateway
     newName: blue-bank-dev.kr.ncr.ntruss.com/blue-bank-gateway
-    newTag: dev-6ea06f700c5606fd868c2963dcee10f0618f6bde
+    newTag: dev-63f6cc7916f9dc9b62312d086e19a0d92b7fef77
