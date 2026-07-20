@@ -15,6 +15,18 @@ spring:
           max-active: 16
           max-idle: 8
           min-idle: 2
+  cloud:
+    gateway:
+      routes:
+        - id: account-service
+          uri: ${SERVICES_ACCOUNT_URL}
+          predicates:
+            - Path=/api/accounts/**
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@ipKeyResolver}"
 
 # 서버 설정
 server:
