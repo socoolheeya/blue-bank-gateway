@@ -7,13 +7,15 @@ import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cloud.gateway.route.builder.GatewayFilterSpec
 
 @Configuration
 class RouteConfiguration {
 
     @Bean
     fun redisRateLimiter(): RedisRateLimiter {
-        return RedisRateLimiter(1, 1, 1)  // replenishRate=2, burstCapacity=5, requestedTokens=1
+        // 100 requests per second per resolved key, with a burst of 100.
+        return RedisRateLimiter(100, 100, 1)
     }
 
     @Bean
@@ -21,12 +23,12 @@ class RouteConfiguration {
         builder: RouteLocatorBuilder,
         redisRateLimiter: RedisRateLimiter,
         ipKeyResolver: KeyResolver,
-        @Value("\${services.account.url:http://account:8100}") accountUrl: String,
-        @Value("\${services.deposit.url:http://deposit:8200}") depositUrl: String,
-        @Value("\${services.loan.url:http://loan:8300}") loanUrl: String,
-        @Value("\${services.card.url:http://card:8400}") cardUrl: String
+        @Value("\${services.account.url:http://blue-bank-account:8100}") accountUrl: String,
+        @Value("\${services.deposit.url:http://blue-bank-deposit:8200}") depositUrl: String,
+        @Value("\${services.loan.url:http://blue-bank-loan:8300}") loanUrl: String,
+        @Value("\${services.card.url:http://blue-bank-card:8400}") cardUrl: String
     ): RouteLocator {
-        fun org.springframework.cloud.gateway.route.builder.GatewayFilterSpec.policies(name: String, fallback: String) =
+        fun GatewayFilterSpec.policies(name: String, fallback: String) =
             requestRateLimiter { config ->
                 config.setRateLimiter(redisRateLimiter)
                 config.setKeyResolver(ipKeyResolver)
